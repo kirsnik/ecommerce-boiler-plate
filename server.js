@@ -1,22 +1,38 @@
-require('dotenv').config('');
-var express = require('express');
-//var createError = require('http-errors');
-// var path = require('path');
-// var cookieParser = require('cookie-parser');
-// var logger = require('morgan');
-var env = process.env.NODE_ENV || 'development';
+require("dotenv").config();
+var express = require("express");
+var db = require("./models");
 var app = express();
-var config = require('./config/config')[env];
-
-require('./server/config/express')(app, config);
-require('./server/config/mongoose')(config);
-require('./server/config/passport')();
-require('./server/config/routes')(app);
+var PORT = process.env.PORT || 3000;
 
 
-app.set('views', __dirname + '/views');
-app.set('view engine', 'jsx');
-app.engine('jsx', require('express-react-views').createEngine());
 
-app.listen(config.port);
-console.log("Server running on port: " + config.port);
+// Middleware
+// code to be added
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.static("build"));
+app.use(express.static('public'));
+app.use(express.static('uploads'));
+
+
+// var syncOptions = { force: false };
+var syncOptions = { force: false };
+
+// If running a test, set syncOptions.force to true
+// clearing the `testdb`
+if (process.env.NODE_ENV === "test") {
+  syncOptions.force = true;
+}
+
+// Starting the server, syncing our models ------------------------------------/
+db.sequelize.sync().then(function () {
+  app.listen(PORT, function () {
+    console.log(
+      "==> 🌎  Listening on port %s. Visit http://localhost:%s/ in your browser.",
+      PORT,
+      PORT
+    );
+  });
+});
+
+module.exports = app;
